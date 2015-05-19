@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">NAO-Connect</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_play">Play</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_thumb">Thumb</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="action_battery">Batteriestand NAO: %i%</string>
+    <string name="action_test">test</string>
+</resources>
