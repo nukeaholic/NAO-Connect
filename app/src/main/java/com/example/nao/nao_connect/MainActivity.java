@@ -4,6 +4,7 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.DragEvent;
@@ -16,12 +17,14 @@ import android.view.View;
 import android.view.View.OnDragListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.nao.nao_connect.model.Command;
+import com.nhaarman.listviewanimations.appearance.simple.AlphaInAnimationAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,15 +32,14 @@ import java.util.List;
 
 public class MainActivity extends ActionBarActivity{
 
-    private ArrayList<Command> avialableCommands;
 
-    private OptionListArrayAdapter adapterol;
+    private ObjectListArrayAdapter objectListAdapter;
 
-    private MainContentListArrayAdapter adaptermc;
+    private MainContentListArrayAdapter mainContentAdapter;
 
     private ClipData dragData;
 
-    private ListView listviewmc;
+    private ListView mainContentListView;
 
 
     @Override
@@ -50,37 +52,35 @@ public class MainActivity extends ActionBarActivity{
         findViewById(R.id.lv_main_content).setOnDragListener(new MyDragListener());
 
         //Array ObjectList
-        final ListView listviewol = (ListView) findViewById(R.id.lv_object_list);
+        final ListView objectListListView = (ListView) findViewById(R.id.lv_object_list);
 
-        avialableCommands = new ArrayList<>();
-        avialableCommands.add(new Command("Nach vorne gehen"));
-        avialableCommands.add(new Command("Nach Links gehen"));
-        avialableCommands.add(new Command("Nach rechts gehen"));
-        avialableCommands.add(new Command("Rückwärts gehen"));
-        avialableCommands.add(new Command("Sich nach links drehen"));
-        avialableCommands.add(new Command("Sich nach rechts drehen"));
-        avialableCommands.add(new Command("Sich umdrehen"));
-        avialableCommands.add(new Command("Winken"));
-        avialableCommands.add(new Command("Hallo sagen"));
-        avialableCommands.add(new Command("Linker Arm hoch"));
-        avialableCommands.add(new Command("Rechter Arm hoch"));
-        avialableCommands.add(new Command("Beide Arme hoch"));
-        avialableCommands.add(new Command("Rechter Arm runter"));
-        avialableCommands.add(new Command("Linker Arm runter"));
-        avialableCommands.add(new Command("Beide Arme runter"));
 
-        adapterol = new OptionListArrayAdapter(this, R.layout.object_list, avialableCommands);
-        listviewol.setAdapter(adapterol);
+
+        objectListAdapter = new ObjectListArrayAdapter(this, R.layout.object_list, Command.getAviableCommands());
+        objectListListView.setAdapter(objectListAdapter);
 
 
         //Array Maincontent
-        listviewmc = (ListView) findViewById(R.id.lv_main_content);
+        mainContentListView = (ListView) findViewById(R.id.lv_main_content);
 
-        final ArrayList<Command> listmc = new ArrayList<>();
-        adaptermc = new MainContentListArrayAdapter(this, R.layout.main_content, listmc);
-        listviewmc.setAdapter(adaptermc);
+        final ArrayList<Command> mainContentList = new ArrayList<>();
+        mainContentAdapter = new MainContentListArrayAdapter(this, R.layout.main_content, mainContentList);
+
+        MyAdapter myAdapter = new MyAdapter();
+        AlphaInAnimationAdapter animationAdapter = new AlphaInAnimationAdapter(myAdapter);
+        animationAdapter.setAbsListView(mListView);
 
 
+        mainContentListView.setAdapter(animationAdapter);
+
+
+    }
+
+    class MyAdapter extends AlphaInAnimationAdapter{
+
+        public MyAdapter(@NonNull BaseAdapter baseAdapter) {
+            super(baseAdapter);
+        }
     }
 
     //Drop
@@ -106,7 +106,7 @@ public class MainActivity extends ActionBarActivity{
 
                     //int y = 1;
                     Log.i("TEST", "Element wurde gedroppt");
-                    adaptermc.add(avialableCommands.get(x).clone());
+                    mainContentAdapter.add(Command.getAviableCommands().get(x).clone());
                     break;
             }
 
@@ -115,10 +115,10 @@ public class MainActivity extends ActionBarActivity{
     }
 
     //ArrayAdapter für Object List
-    private class OptionListArrayAdapter extends ArrayAdapter<Command> {
+    private class ObjectListArrayAdapter extends ArrayAdapter<Command> {
 
 
-        public OptionListArrayAdapter(Context context, int textViewResourceId, List<Command> values) {
+        public ObjectListArrayAdapter(Context context, int textViewResourceId, List<Command> values) {
             super(context, textViewResourceId, values);
         }
 
@@ -130,15 +130,15 @@ public class MainActivity extends ActionBarActivity{
 
             final Command command = getItem(position);
 
-            TextView label = (TextView) result.findViewById(R.id.tvol_label);
+            TextView label = (TextView) result.findViewById(R.id.tv_ObjectList_label);
             label.setText(command.getLabel());
 
-            Button dragButton = (Button) result.findViewById(R.id.btn_Drag_ol);
+            Button dragButton = (Button) result.findViewById(R.id.btn_ObjectList_Drag);
             dragButton.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
 
-                    int index = avialableCommands.indexOf(command);
+                    int index = Command.getAviableCommands().indexOf(command);
                     Log.i("INDEX_TEST", String.valueOf(index));
 
                     ClipData.Item item = new ClipData.Item((CharSequence) v.getTag());
@@ -173,19 +173,19 @@ public class MainActivity extends ActionBarActivity{
 
             final Command command = getItem(position);
 
-            TextView label = (TextView) result.findViewById(R.id.tvmc_label);
+            TextView label = (TextView) result.findViewById(R.id.tv_MainContent_label);
             label.setText(command.getLabel());
 
             //Remove List Object
-            ImageButton rmv_button = (ImageButton) result.findViewById(R.id.btn_remove);
+            ImageButton rmv_button = (ImageButton) result.findViewById(R.id.btn_MainContent_remove);
             rmv_button.setOnTouchListener(new View.OnTouchListener() {
                 public boolean onTouch(final View v, MotionEvent event) {
 
                     result.animate().setDuration(200).alpha(0).withEndAction(new Runnable() {
                                 @Override
                                 public void run() {
-                                    adaptermc.remove(command);
-                                    adaptermc.notifyDataSetChanged();
+                                    mainContentAdapter.remove(command);
+                                    mainContentAdapter.notifyDataSetChanged();
                                     result.setAlpha(1);
                                 }
                     });
