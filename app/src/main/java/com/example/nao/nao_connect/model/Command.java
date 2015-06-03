@@ -50,5 +50,22 @@ public class Command implements Cloneable {
         }
         return avialableCommands;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Command command = (Command) o;
+
+        if (!label.equals(command.label)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return label.hashCode();
+    }
 }
 

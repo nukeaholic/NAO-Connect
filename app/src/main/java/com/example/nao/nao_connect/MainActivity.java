@@ -4,7 +4,6 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.DragEvent;
@@ -17,7 +16,6 @@ import android.view.View;
 import android.view.View.OnDragListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -25,6 +23,8 @@ import android.widget.TextView;
 
 import com.example.nao.nao_connect.model.Command;
 import com.nhaarman.listviewanimations.appearance.simple.AlphaInAnimationAdapter;
+import com.nhaarman.listviewanimations.itemmanipulation.DynamicListView;
+import com.nhaarman.listviewanimations.itemmanipulation.dragdrop.TouchViewDraggableManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,11 +39,13 @@ public class MainActivity extends ActionBarActivity{
 
     private ClipData dragData;
 
-    private ListView mainContentListView;
+    private DynamicListView mainContentListView;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
 
 
         super.onCreate(savedInstanceState);
@@ -61,26 +63,24 @@ public class MainActivity extends ActionBarActivity{
 
 
         //Array Maincontent
-        mainContentListView = (ListView) findViewById(R.id.lv_main_content);
+        mainContentListView = (DynamicListView) findViewById(R.id.lv_main_content);
 
         final ArrayList<Command> mainContentList = new ArrayList<>();
         mainContentAdapter = new MainContentListArrayAdapter(this, R.layout.main_content, mainContentList);
 
-        MyAdapter myAdapter = new MyAdapter();
-        AlphaInAnimationAdapter animationAdapter = new AlphaInAnimationAdapter(myAdapter);
-        animationAdapter.setAbsListView(mListView);
+        AlphaInAnimationAdapter animationAdapter = new AlphaInAnimationAdapter(mainContentAdapter);
+        animationAdapter.setAbsListView(mainContentListView);
 
 
         mainContentListView.setAdapter(animationAdapter);
 
+        mainContentListView.enableDragAndDrop();
+        mainContentListView.setDraggableManager(new TouchViewDraggableManager(R.id.lv_main_content));
 
-    }
 
-    class MyAdapter extends AlphaInAnimationAdapter{
 
-        public MyAdapter(@NonNull BaseAdapter baseAdapter) {
-            super(baseAdapter);
-        }
+
+
     }
 
     //Drop
@@ -155,10 +155,13 @@ public class MainActivity extends ActionBarActivity{
 
             return result;
         }
+
+
     }
 
 
 
+    //Array Adapter für Main Content
     private class MainContentListArrayAdapter extends ArrayAdapter<Command> {
 
         public MainContentListArrayAdapter(Context context, int textViewResourceId, List<Command> objects) {
@@ -197,7 +200,15 @@ public class MainActivity extends ActionBarActivity{
             return result;
         }
 
+        @Override
+        public long getItemId(int position) {
+            return super.getItem(position).hashCode();
+        }
 
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
 
     }
 
