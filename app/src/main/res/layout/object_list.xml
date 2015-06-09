@@ -20,7 +20,7 @@
         android:id="@+id/btn_ObjectList_Drag"
         android:layout_centerVertical="true"
         android:layout_alignParentEnd="true"
-        android:textSize="10sp"/>
+        android:textSize="9sp"/>
 
 
 </RelativeLayout>
