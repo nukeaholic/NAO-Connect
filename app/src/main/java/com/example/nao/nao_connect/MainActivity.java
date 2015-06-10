@@ -15,16 +15,17 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnDragListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.nao.nao_connect.model.Command;
 import com.nhaarman.listviewanimations.appearance.simple.AlphaInAnimationAdapter;
 import com.nhaarman.listviewanimations.itemmanipulation.DynamicListView;
-import com.nhaarman.listviewanimations.itemmanipulation.dragdrop.TouchViewDraggableManager;
+import com.nhaarman.listviewanimations.util.Swappable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,8 @@ public class MainActivity extends ActionBarActivity{
 
     private DynamicListView mainContentListView;
 
+    private List<Command> mainContentList;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,26 +59,30 @@ public class MainActivity extends ActionBarActivity{
         //Array ObjectList
         final ListView objectListListView = (ListView) findViewById(R.id.lv_object_list);
 
-
-
         objectListAdapter = new ObjectListArrayAdapter(this, R.layout.object_list, Command.getAviableCommands());
         objectListListView.setAdapter(objectListAdapter);
 
 
-        //Array Maincontent
-        mainContentListView = (DynamicListView) findViewById(R.id.lv_main_content);
 
-        final ArrayList<Command> mainContentList = new ArrayList<>();
-        mainContentAdapter = new MainContentListArrayAdapter(this, R.layout.main_content, mainContentList);
+        final DynamicListView mainContentListView = (DynamicListView) findViewById(R.id.lv_main_content);
+
+        mainContentList = new ArrayList<>();
+        MainContentListArrayAdapter mainContentAdapter = new MainContentListArrayAdapter();
 
         AlphaInAnimationAdapter animationAdapter = new AlphaInAnimationAdapter(mainContentAdapter);
         animationAdapter.setAbsListView(mainContentListView);
-
-
         mainContentListView.setAdapter(animationAdapter);
 
         mainContentListView.enableDragAndDrop();
-        mainContentListView.setDraggableManager(new TouchViewDraggableManager(R.id.lv_main_content));
+        mainContentListView.setOnItemLongClickListener(
+                new AdapterView.OnItemLongClickListener() {
+                    @Override
+                    public boolean onItemLongClick(final AdapterView<?> parent, final View view, final int position, final long id) {
+                        mainContentListView.startDragging(position);
+                        return true;
+                    }
+                }
+        );
 
 
 
@@ -106,7 +113,7 @@ public class MainActivity extends ActionBarActivity{
 
                     //int y = 1;
                     Log.i("TEST", "Element wurde gedroppt");
-                    mainContentAdapter.add(Command.getAviableCommands().get(x).clone());
+                    mainContentList.add(Command.getAviableCommands().get(x).clone());
                     break;
             }
 
@@ -161,48 +168,34 @@ public class MainActivity extends ActionBarActivity{
 
 
 
-    //Array Adapter für Main Content
-    private class MainContentListArrayAdapter extends ArrayAdapter<Command> {
+    private class MainContentListArrayAdapter extends BaseAdapter implements Swappable {
 
-        public MainContentListArrayAdapter(Context context, int textViewResourceId, List<Command> objects) {
-            super(context, textViewResourceId, objects);
+
+        @Override
+        public int getCount() {
+            return mainContentList.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return mainContentList.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return mainContentList.get(position).getId();
         }
 
         //Drag and Drop
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            final View result = inflater.inflate(R.layout.main_content, parent, false);
+            final View result = inflater.inflate(R.layout.object_list, parent, false);
 
-            final Command command = getItem(position);
+            TextView label = (TextView) result.findViewById(R.id.tv_ObjectList_label);
+            label.setText(mainContentList.get(position).getLabel());
 
-            TextView label = (TextView) result.findViewById(R.id.tv_MainContent_label);
-            label.setText(command.getLabel());
-
-            //Remove List Object
-            ImageButton rmv_button = (ImageButton) result.findViewById(R.id.btn_MainContent_remove);
-            rmv_button.setOnTouchListener(new View.OnTouchListener() {
-                public boolean onTouch(final View v, MotionEvent event) {
-
-                    result.animate().setDuration(200).alpha(0).withEndAction(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mainContentAdapter.remove(command);
-                                    mainContentAdapter.notifyDataSetChanged();
-                                    result.setAlpha(1);
-                                }
-                    });
-
-                    return false;
-                }
-
-            });
             return result;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return super.getItem(position).hashCode();
         }
 
         @Override
@@ -210,6 +203,12 @@ public class MainActivity extends ActionBarActivity{
             return true;
         }
 
+        @Override
+        public void swapItems(int i, int i2) {
+            Command tmp = mainContentList.get(i);
+            mainContentList.set(i, mainContentList.get(i2));
+            mainContentList.set(i2, tmp);
+        }
     }
 
 
